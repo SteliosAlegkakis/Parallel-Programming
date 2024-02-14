@@ -5,10 +5,10 @@ CC = gcc
 CFLAGS = -pthread
 
 # Source file
-SRC = app.c
+SRC = pagerank.c
 
 # Executable file
-EXE = app.exe
+EXE = pagerank.exe
 
 # Output CSV file
 CSV = pagerank.csv
