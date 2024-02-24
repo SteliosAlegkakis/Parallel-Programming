@@ -39,7 +39,3 @@ void* findPagerank(void *_id);
 void checkAllocationStatus(void *_ptr);
 //checks if the given file_ptr is NULL and terminates the execution if so.
 void checkFileStatus(void *_file_ptr, char *_filename);
-//calculates the pagerank of each node in a serial way
-void pagerankSerial();
-//Normalizes the pagerank values
-void normalizePagerank();

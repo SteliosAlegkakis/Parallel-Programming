@@ -8,7 +8,7 @@ CFLAGS = -pthread
 SRC = pagerank.c
 
 # Executable file
-EXE = pagerank.exe
+EXE = pagerank
 
 # Output CSV file
 CSV = pagerank.csv
@@ -16,6 +16,7 @@ CSV = pagerank.csv
 # Determine the operating system
 ifeq ($(OS),Windows_NT)
     RM = del /F
+	EXE = pagerank.exe
 else
     RM = rm -f
 endif
