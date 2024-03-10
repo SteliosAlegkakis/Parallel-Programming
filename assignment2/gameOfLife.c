@@ -1,17 +1,39 @@
 #include "gameOfLife.h"
 
 int main(int argc,char** argv){
+
+    omp_set_num_threads(NUM_THREADS);
+
     int rows,columns;
     char** array = read_file(argv[1], &rows, &columns);
-    printf("\n");
+    FILE* output = fopen(argv[2],"w");
+
     for(int i = 0; i < rows; i++){
         for(int j = 0; j < columns; j++){
-            printf("|%c",array[j][i]);
+            fprintf(output,"|%c%d",array[i][j],count_living_neighbors(i, j, array, rows, columns));
         }
-        printf("|\n");
+        fprintf(output,"|\n");
     }
-    return 0;
+
 }
+
+int count_living_neighbors(int row, int col, char** array, int numOfRows, int numOfCols) {
+    int count = 0;
+    if(col + 1 < numOfCols) count += (array[row][col+1] == alive);
+    if(col - 1 >= 0) count += (array[row][col-1] == alive);
+    if(row - 1 >= 0) {
+        count += (array[row-1][col] == alive);
+        if(col + 1 < numOfCols) count += (array[row-1][col+1] == alive);
+        if(col - 1 >= 0) count += (array[row-1][col-1] == alive);
+    }
+    if(row + 1 < numOfRows) {
+        count += (array[row+1][col] == alive);
+        if(col + 1 < numOfCols) count+= (array[row+1][col+1] == alive);
+        if(col - 1 >= 0) count += (array[row+1][col-1] == alive);
+    }
+    return count;
+}
+
 
 char** read_file(const char* fileName, int* _rows, int* _columns){
 
@@ -20,7 +42,6 @@ char** read_file(const char* fileName, int* _rows, int* _columns){
 
     int rows, columns;
     fscanf(file, "%d %d", &columns, &rows);
-    printf("%d %d", rows, columns);
 
     char** array = (char**) malloc(rows * sizeof(char*));
     check_memory_ptr(array);
@@ -38,14 +59,14 @@ char** read_file(const char* fileName, int* _rows, int* _columns){
             case bar:
                 continue;
             case dead:
-                array[i++][j] = dead;
+                array[i][j++] = dead;
                 break;
             case alive:
-                array[i++][j] = alive;
+                array[i][j++] = alive;
                 break;
             case new_line:
-                j++;
-                i = 0;
+                i++;
+                j = 0;
                 break;
             default:
                 break;
