@@ -2,19 +2,47 @@
 
 int main(int argc,char** argv){
 
-    omp_set_num_threads(NUM_THREADS);
-
     int rows,columns;
     char** array = read_file(argv[1], &rows, &columns);
     FILE* output = fopen(argv[2],"w");
 
+    game_of_life_serial(array, columns, rows, atoi(argv[3]));
+
+    FILE* outputSerial = fopen("outpuSerial.txt","w");
+
     for(int i = 0; i < rows; i++){
         for(int j = 0; j < columns; j++){
-            fprintf(output,"|%c%d",array[i][j],count_living_neighbors(i, j, array, rows, columns));
+            fprintf(outputSerial, "|%c", array[i][j]);
         }
-        fprintf(output,"|\n");
+        fprintf(outputSerial, "|\n");
     }
 
+}
+
+void game_of_life_parallel(char **array, int columns, int rows){
+    
+}
+
+void game_of_life_serial(char** array, int columns, int rows, int generations){
+
+    char** newArray = make_array(columns, rows);
+
+    int numNeighbors;
+    for(int currentGen = 0; currentGen < generations; currentGen++){
+        for(int i = 0; i < rows; i++){
+            for(int j = 0; j < columns; j++){
+                numNeighbors = count_living_neighbors(i, j, array, rows, columns);
+                if(array[i][j] == alive) {
+                    if(numNeighbors < 2 || numNeighbors > 3) newArray[i][j] = dead;
+                    else newArray[i][j] = alive;
+                }else {
+                    if(numNeighbors == 3) newArray[i][j] = alive;
+                    else newArray[i][j] = dead;
+                }
+            }
+        }
+        copy_array(array,newArray,columns);
+    }
 }
 
 int count_living_neighbors(int row, int col, char** array, int numOfRows, int numOfCols) {
@@ -34,6 +62,22 @@ int count_living_neighbors(int row, int col, char** array, int numOfRows, int nu
     return count;
 }
 
+char** make_array(int columns, int rows){
+    char** newArray = (char**)malloc(rows * sizeof(char*));
+    check_memory_ptr(newArray);
+    for(int i = 0; i < rows; i++){
+        newArray[i] = (char*) malloc(columns * sizeof(char));
+        check_memory_ptr(newArray[i]);
+    }
+    return newArray;
+}
+
+void copy_array(char** dst, char** src, int size){
+    for(int i = 0; i < size; i++){
+        strcpy(dst[i],src[i]);
+    }
+}
+
 
 char** read_file(const char* fileName, int* _rows, int* _columns){
 
@@ -43,12 +87,7 @@ char** read_file(const char* fileName, int* _rows, int* _columns){
     int rows, columns;
     fscanf(file, "%d %d", &columns, &rows);
 
-    char** array = (char**) malloc(rows * sizeof(char*));
-    check_memory_ptr(array);
-    for(int i = 0; i < rows; i++){
-        array[i] = (char*) malloc(columns * sizeof(char));
-        check_memory_ptr(array[i]);
-    }
+    char** array = make_array(columns, rows);
 
     char c = fgetc(file);
     int i = 0, j = 0;
