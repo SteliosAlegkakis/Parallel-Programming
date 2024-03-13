@@ -2,11 +2,12 @@
 
 int main(int argc,char** argv){
 
-    int rows,columns;
+    int rows, columns, generations = atoi(argv[2]);
     char** array = read_file(argv[1], &rows, &columns);
-    FILE* output = fopen(argv[2],"w");
+    FILE* output = fopen(argv[3],"w");
+    omp_set_num_threads(atoi(argv[4]));
 
-    game_of_life_serial(array, columns, rows, atoi(argv[3]));
+    game_of_life_serial(array, columns, rows, generations);
 
     FILE* outputSerial = fopen("outpuSerial.txt","w");
 
@@ -14,13 +15,41 @@ int main(int argc,char** argv){
         for(int j = 0; j < columns; j++){
             fprintf(outputSerial, "|%c", array[i][j]);
         }
-        fprintf(outputSerial, "|\n");
+         fprintf(outputSerial, "|\n");
     }
+
+    // game_of_life_parallel(array, columns, rows, generations);
+
+    // for(int i = 0; i < rows; i++){
+    //     for(int j = 0; j < columns; j++){
+    //         fprintf(output, "|%c", array[i][j]);
+    //     }
+    //     fprintf(output, "|\n");
+    // }
+    // printf("test");
 
 }
 
-void game_of_life_parallel(char **array, int columns, int rows){
-    
+void game_of_life_parallel(char **array, int columns, int rows, int generations){
+    char **newArray = make_array(columns, rows);
+
+    int numNeighbors,currentGen = 0, i = 0 , j = 0;
+    #pragma omp for
+    for(int currentGen = 0; currentGen < generations; currentGen++){
+        for(int i = 0; i < rows; i++){
+            for(int j = 0; j < columns; j++){
+                numNeighbors = count_living_neighbors(i, j, array, rows, columns);
+                if( numNeighbors == 3 ) newArray[i][j] = alive;
+                else if( numNeighbors == 2 && array[i][j] == alive) newArray[i][j] = alive;
+                else newArray[i][j] = dead;
+            }
+        }
+        
+        #pragma omp critical
+        {
+            copy_array(array,newArray,columns);
+        }
+    }
 }
 
 void game_of_life_serial(char** array, int columns, int rows, int generations){
@@ -32,17 +61,14 @@ void game_of_life_serial(char** array, int columns, int rows, int generations){
         for(int i = 0; i < rows; i++){
             for(int j = 0; j < columns; j++){
                 numNeighbors = count_living_neighbors(i, j, array, rows, columns);
-                if(array[i][j] == alive) {
-                    if(numNeighbors < 2 || numNeighbors > 3) newArray[i][j] = dead;
-                    else newArray[i][j] = alive;
-                }else {
-                    if(numNeighbors == 3) newArray[i][j] = alive;
-                    else newArray[i][j] = dead;
-                }
+                if( numNeighbors == 3 ) newArray[i][j] = alive;
+                else if( numNeighbors == 2 && array[i][j] == alive) newArray[i][j] = alive;
+                else newArray[i][j] = dead;
             }
         }
         copy_array(array,newArray,columns);
     }
+
 }
 
 int count_living_neighbors(int row, int col, char** array, int numOfRows, int numOfCols) {

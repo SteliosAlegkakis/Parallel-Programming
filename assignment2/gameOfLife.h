@@ -8,6 +8,7 @@
 #define new_line '\n'
 
 char** read_file(const char* filename, int* rows, int* columns);
+void game_of_life_parallel(char** array, int columns, int rows, int generations);
 void game_of_life_serial(char** array, int columns, int rows, int generations);
 int count_living_neighbors(int row, int col, char** array, int numOfRows, int numOfCols);
 char** make_array(int columns, int rows);
