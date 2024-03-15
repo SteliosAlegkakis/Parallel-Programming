@@ -8,7 +8,7 @@ int main(int argc,char** argv) {
     numOfThreads = atoi(argv[4]);
 
     game_of_life_parallel(array, columns, rows, generations);
-
+    
     for(int i = 0; i < rows; i++){
         for(int j = 0; j < columns; j++){
             fprintf(output, "|%c", array[i][j]);
@@ -23,9 +23,10 @@ void game_of_life_parallel(char **array, int columns, int rows, int generations)
     char** newArray = make_array(columns, rows);
     int numNeighbors,currentGen = 0, i = 0 , j = 0;
 
+    #ifdef _OPENMP
     omp_set_dynamic(0);
     omp_set_num_threads(numOfThreads);
-    
+    #endif
     for(currentGen = 0; currentGen < generations; currentGen++){
 
         #pragma omp parallel for private(i, j, numNeighbors)
@@ -84,7 +85,9 @@ void copy_array_parallel(char** dst, char** src, int rows, int columns) {
 
     #pragma omp parallel for private (i)
     for(i = 0; i < rows; i++){
-        strcpy(dst[i],src[i]);
+        for(int j = 0; j < columns; j++){
+            dst[i][j] = src[i][j];
+        }
     }
     
 }
