@@ -80,16 +80,14 @@ char** make_array(int columns, int rows) {
 
 void copy_array_parallel(char** dst, char** src, int rows, int columns) {
 
-    int i = 0, j = 0;
+    int i = 0;
 
-    #pragma omp parallel for private (i, j)
+    #pragma omp parallel for private (i)
     for(i = 0; i < rows; i++){
-        for(j = 0; j < columns; j++)
-            dst[i][j] = src[i][j];
+        strcpy(dst[i],src[i]);
     }
     
 }
-
 
 char** read_file(const char* fileName, int* _rows, int* _columns) {
 
