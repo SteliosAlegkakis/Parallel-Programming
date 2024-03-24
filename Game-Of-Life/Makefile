@@ -3,4 +3,4 @@ parallel:
 serial:
 	gcc gameOfLife.c
 clean:
-	del -f output.txt a.exe
+	rm -f output.txt a.out
