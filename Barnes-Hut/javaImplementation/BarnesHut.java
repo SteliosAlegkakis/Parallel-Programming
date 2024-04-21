@@ -4,47 +4,73 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-class BarnesHut{
+public class BarnesHut {
+    private static double dimension;
+    private static ArrayList<Body> bodies;
+    private static ArrayList<Square> BHtree;
 
-    static ArrayList<Particle> particles = new ArrayList<Particle>();
-    static int numberOfParticles = 0;
-    static double dimension = 0.0;
-    
-    public static void main(String[] args){
-        System.out.println("Barnes-Hut Algorithm");
-        if (args.length == 0) {
-            System.out.println("No arguments provided. Please provide a filename.");
-            return;
-        }
+    public static void main(String[] args) {
+        bodies = new ArrayList<Body>();
+        BHtree = new ArrayList<Square>();
         readFile(args[0]);
-        print();
-        barnesHut();
+
+        Square root = new Square(0, -1, 0, 0.0, 0.0, 2*dimension, "root");
+        root.bodies = bodies;
+        BHtree.add(root);
+        buildTree(root.bodies, root);
+        printTree();
     }
 
-    public static void barnesHut(){
-        System.out.println("Barnes-Hut Algorithm");
+
+
+    public static boolean isBodyInSquare(Body b, Square s){
+        return b.x <= s.x_mid + s.length/2.0 && b.x >= s.x_mid - s.length/2.0 && b.y <= s.y_mid + s.length/2.0 && b.y >= s.y_mid - s.length/2.0;
     }
 
-    public static int getLength(){
-        return 0;
-    }
+    public static void buildTree(ArrayList<Body> bodies, Square parent){
 
-    public static void insert(){
-        return ;
-    }
+        Square top_left = new Square(parent.id + 1, parent.id, parent.level + 1, parent.x_mid - parent.length/4.0, parent.y_mid + parent.length/4.0, parent.length/2.0, "top_left");
+        BHtree.add(top_left);
+        for(Body b : bodies) {
+            if(isBodyInSquare(b, top_left)) {
+                top_left.bodies.add(b);
+            }
+        }
+        if(top_left.bodies.size() > 1){
+            buildTree(top_left.bodies, top_left);
+        }
 
-    public static double netForce(){
-        return 0.0;
-    }
+        Square top_right = new Square(parent.id + 2, parent.id, parent.level + 1, parent.x_mid + parent.length/4.0, parent.y_mid + parent.length/4.0, parent.length/2.0, "top_right");
+        BHtree.add(top_right);
+        for(Body b : bodies) {
+            if(isBodyInSquare(b, top_right)){
+                top_right.bodies.add(b);
+            }
+        }
+        if(top_right.bodies.size() > 1){
+            buildTree(top_right.bodies, top_right);
+        }
 
-    public static void newPosition(){
-        return ;
-    }
+        Square bottom_left = new Square(parent.id + 3, parent.id, parent.level + 1, parent.x_mid - parent.length/4.0, parent.y_mid - parent.length/4.0, parent.length/2.0, "bottom_left");
+        BHtree.add(bottom_left);
+        for(Body b : bodies) {
+            if(isBodyInSquare(b, bottom_left)) {
+                bottom_left.bodies.add(b);
+            }
+        }
+        if(bottom_left.bodies.size() > 1){
+            buildTree(bottom_left.bodies, bottom_left);
+        }
 
-    public static void print() {
-        System.out.println("Number of Particles: " + numberOfParticles);
-        for (Particle particle : particles) {
-            System.out.println(particle.toString());
+        Square bottom_right = new Square(parent.id + 4, parent.id, parent.level + 1, parent.x_mid + parent.length/4.0, parent.y_mid - parent.length/4.0, parent.length/2.0, "bottom_right");
+        BHtree.add(bottom_right);
+        for(Body b : bodies) {
+            if(isBodyInSquare(b, bottom_right)) {
+                bottom_right.bodies.add(b);
+            }
+        }
+        if(bottom_right.bodies.size() > 1){
+            buildTree(bottom_right.bodies, bottom_right);
         }
     }
 
@@ -52,10 +78,10 @@ class BarnesHut{
         try {
             File file = new File(filename);
             Scanner scanner = new Scanner(file);
-            numberOfParticles = Integer.parseInt(scanner.nextLine());
+            int number_of_bodies = Integer.parseInt(scanner.nextLine());
             dimension = Double.parseDouble(scanner.nextLine());
             int n = 0;
-            while (scanner.hasNextLine() && n < numberOfParticles) {
+            while (scanner.hasNextLine() && n < number_of_bodies) {
                 String line = scanner.nextLine();
                 String[] values = line.split(" ");
                 double x = Double.parseDouble(values[0]);
@@ -64,8 +90,8 @@ class BarnesHut{
                 double vy = Double.parseDouble(values[3]);
                 double mass = Double.parseDouble(values[4]);
                 String s = values[5];
-                Particle particle = new Particle(x, y, vx, vy, mass, s);
-                particles.add(particle);
+                Body body = new Body(n, x, y, vx, vy, mass, s);
+                bodies.add(body);
                 n++;
             }
             
@@ -74,5 +100,68 @@ class BarnesHut{
             System.out.println("File not found: " + filename);
         }
         return ;
+    }
+
+    public static void printTree() {
+        System.out.println("dimension: " + dimension);
+        for(Square s : BHtree){
+            System.out.println("id: " + s.id + " parent_id: " + s.parent_id + " level: " + s.level + " x_mid: " + s.x_mid + " y_mid: " + s.y_mid + " length: " + s.length + " location: " + s.location + " bodies: " + s.bodies.size());
+            for(Body b : s.bodies){
+                System.out.println(b.s);
+            }
+        }
+    
+    }
+}
+
+class Body {
+    int id;
+    double x;
+    double y;
+    double vx;
+    double vy;
+    double mass;
+    String s;
+    double fx;
+    double fy;
+
+    Body(int id, double x, double y, double vx, double vy, double mass, String s){
+        this.id = id;
+        this.x = x;
+        this.y = y;
+        this.mass = mass;
+        this.vx = vx;
+        this.vy = vy;
+        this.s = s;
+    }
+
+    public String toString(){
+        return "x: " + x + " y: " + y + " vx: " + vx + " vy: " + vy + " mass: " + mass + " s: " + s + " fx: " + fx + " fy: " + fy;
+    }
+}
+
+class Square {
+    int id;
+    int parent_id;
+    int level;
+    double x_mid;
+    double y_mid;
+    double length;
+    String location;
+    ArrayList<Body> bodies;
+    Square top_left;
+    Square top_right;
+    Square bottom_left;
+    Square bottom_right;
+
+    Square(int id, int parent_id, int level, double x_mid, double y_mid, double length, String location){
+        this.id = id;
+        this.parent_id = parent_id;
+        this.level = level;
+        this.x_mid = x_mid;
+        this.y_mid = y_mid;
+        this.length = length;
+        this.location = location;
+        this.bodies = new ArrayList<Body>();
     }
 }
