@@ -3,6 +3,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -10,6 +11,10 @@ public class BarnesHut {
     private static double dimension;
     private static ArrayList<Body> bodies;
     private static ArrayList<Square> BHtree;
+    private static ExecutorService executor;
+    private static int start;
+    private static int end;
+
     private static double G = 6.674 * Math.pow(10, -11);
 
     public static void main(String[] args) {
@@ -18,11 +23,38 @@ public class BarnesHut {
         readFile(args[0]);
         int itterations = Integer.parseInt(args[2]);
 
-        for(int i = 0; i < itterations; i++)
-            barnesHutSerial();
+        if(args[1].equals("serial"))
+            for(int i = 0; i < itterations; i++)
+                barnesHutSerial();
+        else {
+            int number_of_threads = Integer.parseInt(args[1]);
+            executor = java.util.concurrent.Executors.newFixedThreadPool(number_of_threads);
+            for(int i = 0; i < itterations; i++) 
+                barnesHutParallel(number_of_threads);
+
+            executor.shutdown();
+        }
 
         print();
 
+    }
+
+    public static void barnesHutParallel(int number_of_threads) {
+        Square root = new Square(0, -1, 0, 0.0, 0.0, 2*dimension, "root");
+        root.bodies = bodies;
+        BHtree.add(root);
+        buildTree(root.bodies, root);
+        for(Square s : BHtree) calculateCenterOfMass(s);
+
+        int bodies_per_thread = bodies.size() / number_of_threads;
+        start = 0;
+        end = bodies_per_thread;
+
+        for(int i = 0; i < number_of_threads; i++){
+            executor.execute(new BarnesHutThread(start, end));
+            start = end;
+            end = Math.min(end + bodies_per_thread, bodies.size());
+        }
     }
 
     public static void barnesHutSerial() {
@@ -31,6 +63,7 @@ public class BarnesHut {
         BHtree.add(root);
         buildTree(root.bodies, root);
         for(Square s : BHtree) calculateCenterOfMass(s);
+
         for(int i = 0; i < bodies.size(); i++){
             calculateForce(i, 0);
             calculateSpeed(i);
